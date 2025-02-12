@@ -3,12 +3,15 @@ import ToolGrid from "@/components/tools/tool-grid";
 import SearchTools from "@/components/tools/search-tools";
 import type { Tool } from "@shared/schema";
 import { useState } from "react";
+import { useLanguage } from "@/lib/language-context";
 
 export default function Home() {
   const [searchResults, setSearchResults] = useState<Tool[] | null>(null);
+  const { currentLanguage } = useLanguage();
 
   const { data: featuredTools, isLoading } = useQuery({
-    queryKey: ["/api/tools/featured"]
+    queryKey: ["/api/tools/language/" + currentLanguage],
+    enabled: !!currentLanguage
   });
 
   const handleSearchResults = (results: Tool[]) => {

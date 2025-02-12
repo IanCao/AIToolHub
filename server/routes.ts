@@ -31,6 +31,21 @@ export function registerRoutes(app: Express): Server {
     res.json(tools);
   });
 
+  // Get tools by language
+  app.get("/api/tools/language/:language", async (req, res) => {
+    const tools = await storage.getToolsByLanguage(req.params.language);
+    res.json(tools);
+  });
+
+  // Get tools by category and language
+  app.get("/api/tools/category/:category/language/:language", async (req, res) => {
+    const tools = await storage.getToolsByCategoryAndLanguage(
+      req.params.category,
+      req.params.language
+    );
+    res.json(tools);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

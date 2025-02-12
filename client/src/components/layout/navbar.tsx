@@ -1,9 +1,13 @@
 import { Link } from "wouter";
-import { categories } from "@shared/schema";
+import { categories, languages } from "@shared/schema";
 import { Search } from "lucide-react";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useLanguage } from "@/lib/language-context";
 
 export default function Navbar() {
+  const { currentLanguage, setCurrentLanguage } = useLanguage();
+
   return (
     <nav className="border-b">
       <div className="container mx-auto px-4">
@@ -27,6 +31,18 @@ export default function Navbar() {
           </NavigationMenu>
 
           <div className="flex items-center gap-4">
+            <Select value={currentLanguage} onValueChange={setCurrentLanguage}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {languages.map((lang) => (
+                  <SelectItem key={lang} value={lang}>
+                    {lang}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Search className="h-5 w-5" />
           </div>
         </div>

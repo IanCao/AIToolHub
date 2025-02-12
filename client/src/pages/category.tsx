@@ -2,18 +2,20 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "wouter";
 import ToolGrid from "@/components/tools/tool-grid";
 import { categories } from "@shared/schema";
+import { useLanguage } from "@/lib/language-context";
 
 export default function Category() {
   const { category } = useParams();
-  
+  const { currentLanguage } = useLanguage();
+
   // Validate category
   const validCategory = categories.find(
     c => c.toLowerCase() === category?.toLowerCase()
   );
 
   const { data: tools, isLoading } = useQuery({
-    queryKey: [`/api/tools/category/${category}`],
-    enabled: !!validCategory
+    queryKey: [`/api/tools/category/${category}/language/${currentLanguage}`],
+    enabled: !!validCategory && !!currentLanguage
   });
 
   if (!validCategory) {
