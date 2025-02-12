@@ -15,7 +15,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getToolsByCategory(category: string): Promise<Tool[]> {
-    return await db.select().from(tools).where(eq(tools.category, category));
+    // Capitalize first letter to match schema format
+    const normalizedCategory = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+    return await db.select().from(tools).where(eq(tools.category, normalizedCategory));
   }
 
   async searchTools(query: string): Promise<Tool[]> {
