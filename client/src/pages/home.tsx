@@ -9,7 +9,7 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<Tool[] | null>(null);
   const { currentLanguage } = useLanguage();
 
-  const { data: featuredTools, isLoading } = useQuery({
+  const { data: tools, isLoading } = useQuery({
     queryKey: ["/api/tools/language/" + currentLanguage],
     enabled: !!currentLanguage
   });
@@ -19,34 +19,38 @@ export default function Home() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="max-w-2xl">
-        <h1 className="text-4xl font-bold tracking-tight">
+    <div className="space-y-8 max-w-[2000px] mx-auto">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-center sm:text-left">
           Discover Amazing AI Tools
         </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
+        <p className="mt-4 text-base sm:text-lg text-muted-foreground text-center sm:text-left">
           Explore our curated collection of AI tools to enhance your productivity
           and creativity.
         </p>
       </div>
 
-      <SearchTools onResults={handleSearchResults} />
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SearchTools onResults={handleSearchResults} />
+      </div>
 
-      {searchResults ? (
-        <div>
-          <h2 className="mb-6 text-2xl font-semibold">Search Results</h2>
-          <ToolGrid tools={searchResults} />
-        </div>
-      ) : (
-        <div>
-          <h2 className="mb-6 text-2xl font-semibold">Featured Tools</h2>
-          {isLoading ? (
-            <div className="text-center">Loading...</div>
-          ) : (
-            <ToolGrid tools={featuredTools || []} />
-          )}
-        </div>
-      )}
+      <div className="px-4 sm:px-6 lg:px-8">
+        {searchResults ? (
+          <div>
+            <h2 className="mb-6 text-xl sm:text-2xl font-semibold">Search Results</h2>
+            <ToolGrid tools={searchResults} />
+          </div>
+        ) : (
+          <div>
+            <h2 className="mb-6 text-xl sm:text-2xl font-semibold">Featured Tools</h2>
+            {isLoading ? (
+              <div className="text-center py-8">Loading...</div>
+            ) : (
+              <ToolGrid tools={tools || []} />
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
