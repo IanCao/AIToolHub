@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { insertReviewSchema } from "@shared/schema";
 
 export function registerRoutes(app: Express): Server {
   // Get all tools
@@ -44,6 +45,26 @@ export function registerRoutes(app: Express): Server {
       req.params.language
     );
     res.json(tools);
+  });
+
+  // New review routes
+  app.get("/api/tools/:toolId/reviews", async (req, res) => {
+    const toolId = parseInt(req.params.toolId);
+    const reviews = await storage.getReviewsByToolId(toolId);
+    res.json(reviews);
+  });
+
+  app.get("/api/tools/:toolId/rating", async (req, res) => {
+    const toolId = parseInt(req.params.toolId);
+    const rating = await storage.getAverageRating(toolId);
+    res.json({ rating });
+  });
+
+  app.post("/api/tools/:toolId/reviews", async (req, res) => {
+    const toolId = parseInt(req.params.toolId);
+    const reviewData = insertReviewSchema.parse({ ...req.body, toolId });
+    const review = await storage.createReview(reviewData);
+    res.json(review);
   });
 
   const httpServer = createServer(app);
