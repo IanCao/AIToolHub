@@ -12,7 +12,7 @@ interface ExtendedRequest extends Request  {
   }
 }
 
-const API_KEY = 'my-api-key-123'
+const API_KEY = '1234'
 const RATE_LIMIT = 100
 const RATE_LIMIT_WINDOW = 60
 const rateLimitCache = new Map<string, { count: number, resetTime: number }>()
@@ -29,11 +29,6 @@ router.use(async (request: ExtendedRequest) => {
         rateLimitCache.set(ip, rateLimitInfo);
     }
     rateLimitInfo.count++;
-  
-    // set rate limit headers
-    request.headers.set('X-RateLimit-Limit', RATE_LIMIT.toString());
-    request.headers.set('X-RateLimit-Remaining', Math.max(0, RATE_LIMIT - rateLimitInfo.count).toString());
-    request.headers.set('X-RateLimit-Reset', rateLimitInfo.resetTime.toString());
   
   
   request.rateLimit = { limit: RATE_LIMIT, remaining: Math.max(0, RATE_LIMIT - rateLimitInfo.count), reset: rateLimitInfo.resetTime }
@@ -166,21 +161,41 @@ router.post('/api/reviews', async (request: ExtendedRequest, env: Env) => {
   }
 })
 
-router.all('*', (request: ExtendedRequest) => { 
-  
-  if (request.rateLimit) {
-    request.headers.set('X-RateLimit-Limit', request.rateLimit.limit.toString());
-    request.headers.set('X-RateLimit-Remaining', request.rateLimit.remaining.toString());
-    request.headers.set('X-RateLimit-Reset', request.rateLimit.reset.toString());
+router.post('/api/tools', async (request: ExtendedRequest, env: Env) => {
+  try{
+    const body = await request.json()
+    const { name, description, category, url, imageUrl, featured, language, translations } = body
+
+    if (!name || !description || !category || !url || !imageUrl || featured === undefined || !language || !translations) {
+      return new Response(JSON.stringify({ error: 'Invalid tool data' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    const stmt = env.MY_DATABASE.prepare('INSERT INTO tools (name, description, category, url, imageUrl, featured, language, translations) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    const { meta } = await stmt.bind(name, description, category, url, imageUrl, featured, language, translations).run()
+    const id = meta.last_row_id
+    return new Response(JSON.stringify({id}), { headers: { 'Content-Type': 'application/json' } })
+
+  }catch(error){
+    console.error(error);
+    return new Response(JSON.stringify({ error: 'Failed to create tool' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
+})
 
+
+router.all('*', (request: ExtendedRequest) => {
+  let response: Response;
+  response = new Response(JSON.stringify({ error: 'Not Found.' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+
+  if (request.rateLimit){
+     response.headers.set('X-RateLimit-Limit', request.rateLimit.limit.toString());
+     response.headers.set('X-RateLimit-Remaining', request.rateLimit.remaining.toString());
+     response.headers.set('X-RateLimit-Reset', request.rateLimit.reset.toString());
+  }
+  return response
 
   
-
-
-  return new Response('Not Found.', { status: 404, headers: { 'Conprint(default_api.natural_language_write_file(language='typescript', path='server/worker.ts', prompt='Modify the file to add a new handler. The method should be POST, the path should be `/api/tools`. This handler should accept a JSON body and insert the data into the `tools` table. The JSON body should contain the following fields: `name`, `description`, `category`, `url`, `imageUrl`, `featured`, `language`, and `translations`. The field types should match the table structure. The handler should return the ID of the newly created tool in the JSON response. Do not change any existing code logic. If an error occurs, handle it and return the error message in the JSON response.'))
-tent-Type': 'application/json' } });
 });
+
 export default {
   fetch: router.handle
 }
