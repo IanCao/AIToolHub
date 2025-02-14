@@ -6,54 +6,11 @@ export interface Env {
   MY_DATABASE: D1Database
 }
 
-interface ExtendedRequest extends Request {
-  rateLimit?: {
-    limit: number;
-    remaining: number;
-    reset: number;
-  }
-}
+interface ExtendedRequest extends Request {}
 const API_KEY = '1234'
-const RATE_LIMIT = 100
-const RATE_LIMIT_WINDOW = 60
-const rateLimitCache = new Map<string, { count: number, resetTime: number }>()
 const router = Router()
 
-router.use(async (request: Request, response, next
-) => {
-  const ip = request.headers.get('cf-connecting-ip') || '127.0.0.1';
-  const now = Math.floor(Date.now() / 1000);
-  let rateLimitInfo = rateLimitCache.get(ip);
 
-  if (!rateLimitInfo || rateLimitInfo.resetTime < now) {
-    rateLimitInfo = { count: 0, resetTime: now + RATE_LIMIT_WINDOW };
-    rateLimitCache.set(ip, rateLimitInfo);
-  }
-  rateLimitInfo.count++;
-
-  (request as ExtendedRequest).rateLimit = { limit: RATE_LIMIT, remaining: Math.max(0, RATE_LIMIT - rateLimitInfo.count), reset: rateLimitInfo.resetTime }
-  
-  
-  request.rateLimit = { limit: RATE_LIMIT, remaining: Math.max(0, RATE_LIMIT - rateLimitInfo.count), reset: rateLimitInfo.resetTime }
-  if (rateLimitInfo.count > RATE_LIMIT) {
-    return new Response(JSON.stringify({ error: 'Too Many Requests' }), { status: 429 , headers: { 'Content-Type': 'application/json' },})
-  }
-  if (request.method !== 'GET') {
-      const apiKey = request.headers.get('x-api-key')
-      if (!apiKey || apiKey !== API_KEY) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-      }
-  } 
-  await next();
-})
-
-const addRateLimitHeaders = (response: Response, request: ExtendedRequest) => {
-  if (request.rateLimit) {
-    response.headers.set('X-RateLimit-Limit', request.rateLimit.limit.toString());
-    response.headers.set('X-RateLimit-Remaining', request.rateLimit.remaining.toString());
-    response.headers.set('X-RateLimit-Reset', request.rateLimit.reset.toString());
-  }
-};
 
 // GET all tools
 router.get('/api/tools', async (request: ExtendedRequest, env: Env) => {
@@ -212,10 +169,8 @@ router.all('*', async (request: ExtendedRequest) => {
     status: 404,
     headers: { 'Content-Type': 'application/json' }
   });
-
-  addRateLimitHeaders(response, request)
   return response
-})
+});
 
 
 
