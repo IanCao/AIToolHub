@@ -19,7 +19,8 @@ const RATE_LIMIT_WINDOW = 60
 const rateLimitCache = new Map<string, { count: number, resetTime: number }>()
 const router = Router()
 
-router.use(async (request: Request) => {
+router.use(async (request: Request, response, next
+) => {
   const ip = request.headers.get('cf-connecting-ip') || '127.0.0.1';
   const now = Math.floor(Date.now() / 1000);
   let rateLimitInfo = rateLimitCache.get(ip);
@@ -43,7 +44,7 @@ router.use(async (request: Request) => {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
       }
   } 
-
+  await next();
 })
 
 const addRateLimitHeaders = (response: Response, request: ExtendedRequest) => {
