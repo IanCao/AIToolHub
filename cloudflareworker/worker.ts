@@ -6,10 +6,13 @@ export interface Env {
   MY_DATABASE: D1Database;
 }
 
-
 function log(message: string, env: Env) {
-  // Use env.LOG_LEVEL to control logging level
-  console.log(`[LOG] ${message}`);
+  const timestamp = new Date().toISOString();
+    if (!env.MY_DATABASE) {
+        console.error(`${timestamp} [ERROR] Database not initialized.`);
+    } else {
+      console.log(`${timestamp} [LOG] ${message}`);
+    }
 }
 
 interface ExtendedRequest extends Request {}
@@ -20,10 +23,15 @@ const router = Router()
 
 // GET all tools
 router.get('/api/tools', async (_request: ExtendedRequest, env: Env) => {
-    try {
-      log("Fetching all tools", env);
-      const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools').all();
-      log(`Found ${results.length} tools`, env);
+  try {
+    if (!env.MY_DATABASE) {
+        console.error("Database not initialized.");
+        return new Response(JSON.stringify({ error: 'Database not initialized' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
+    
+    log("Fetching all tools", env);
+    const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools').all();
+    log(`Found ${results.length} tools`, env);
       return new Response(JSON.stringify(results || []), { headers: { 'Content-Type': 'application/json' } });
   }catch (error) {
       console.error("Error fetching all tools:", error);
@@ -34,10 +42,14 @@ router.get('/api/tools', async (_request: ExtendedRequest, env: Env) => {
 router.get('/api/tools/category/:category', async (request: ExtendedRequest, env: Env) => {
   const { category } = request.params;
 
-    try {
+  try {
+    if (!env.MY_DATABASE) {
+        console.error("Database not initialized.");
+        return new Response(JSON.stringify({ error: 'Database not initialized' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
 
-      log(`Fetching tools by category: ${category}`, env);
-      const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools WHERE category = ?').bind(category).all();
+    log(`Fetching tools by category: ${category}`, env);
+    const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools WHERE category = ?').bind(category).all();
       log(`Found ${results.length} tools in category: ${category}`, env);
       return new Response(JSON.stringify(results || []), { headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
@@ -49,15 +61,20 @@ router.get('/api/tools/category/:category', async (request: ExtendedRequest, env
 
 
 router.get('/api/tools/search', async (request: ExtendedRequest, env: Env) => {
-    try{
+  try{
+    if (!env.MY_DATABASE) {
+        console.error("Database not initialized.");
+        return new Response(JSON.stringify({ error: 'Database not initialized' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
+
     const { searchParams } = new URL(request.url)
     const q = searchParams.get('q')
     if (!q) {
       return new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } });
     }
     log(`Searching tools with query: ${q}`, env);
-    const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools WHERE name LIKE ? OR description LIKE ?').bind(`%${q}%`, `%${q}%`).all();
-    log(`Found ${results.length} tools matching query: ${q}`, env);
+      const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools WHERE name LIKE ? OR description LIKE ?').bind(`%${q}%`, `%${q}%`).all();
+      log(`Found ${results.length} tools matching query: ${q}`, env);
     return new Response(JSON.stringify(results || []), { headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
       console.error(`Error searching tools with query: ${q}`, error);
@@ -68,8 +85,13 @@ router.get('/api/tools/search', async (request: ExtendedRequest, env: Env) => {
 
 
 router.get('/api/tools/featured', async (request: ExtendedRequest, env: Env) => {
-    try{
-    const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools WHERE featured = 1').all()
+  try{
+    if (!env.MY_DATABASE) {
+        console.error("Database not initialized.");
+        return new Response(JSON.stringify({ error: 'Database not initialized' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools WHERE featured = 1').all();
       log(`Found ${results.length} featured tools`, env);
       return new Response(JSON.stringify(results || []), { headers: { 'Content-Type': 'application/json' } })
   } catch (error){
@@ -81,9 +103,14 @@ router.get('/api/tools/featured', async (request: ExtendedRequest, env: Env) => 
 
 
 router.get('/api/tools/language/:language', async (request: ExtendedRequest, env: Env) => {
-    try{
+  try{
+    if (!env.MY_DATABASE) {
+        console.error("Database not initialized.");
+        return new Response(JSON.stringify({ error: 'Database not initialized' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
+
     const { language } = request.params
-    const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools WHERE language = ?').bind(language).all()
+      const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools WHERE language = ?').bind(language).all()
       log(`Found ${results.length} tools with language: ${language}`, env);
     return new Response(JSON.stringify(results || []), { headers: { 'Content-Type': 'application/json' } })
   } catch (error){
@@ -94,10 +121,14 @@ router.get('/api/tools/language/:language', async (request: ExtendedRequest, env
 })
 router.get('/api/tools/category/:category/language/:language', async (request: ExtendedRequest, env: Env) => {
 
-    try{
-
+  try{
+    if (!env.MY_DATABASE) {
+        console.error("Database not initialized.");
+        return new Response(JSON.stringify({ error: 'Database not initialized' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
+    
     const { category, language } = request.params
-    const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools WHERE category = ? AND language = ?').bind(category, language).all()
+      const { results } = await env.MY_DATABASE.prepare('SELECT * FROM tools WHERE category = ? AND language = ?').bind(category, language).all()
       log(`Found ${results.length} tools with category: ${category} and language: ${language}`, env);
       return new Response(JSON.stringify(results || []), { headers: { 'Content-Type': 'application/json' } })
   } catch (error){
@@ -109,9 +140,14 @@ router.get('/api/tools/category/:category/language/:language', async (request: E
 
 
 router.get('/api/tools/:toolId/reviews', async (request: ExtendedRequest, env: Env) => {
-    try{
+  try{
+    if (!env.MY_DATABASE) {
+        console.error("Database not initialized.");
+        return new Response(JSON.stringify({ error: 'Database not initialized' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
+
     const { toolId } = request.params
-    const { results } = await env.MY_DATABASE.prepare('SELECT * FROM reviews WHERE toolId = ?').bind(toolId).all()
+      const { results } = await env.MY_DATABASE.prepare('SELECT * FROM reviews WHERE toolId = ?').bind(toolId).all()
       log(`Found ${results.length} reviews for toolId: ${toolId}`, env);
       return new Response(JSON.stringify(results || []), { headers: { 'Content-Type': 'application/json' } })
   } catch (error){
@@ -124,8 +160,13 @@ router.get('/api/tools/:toolId/reviews', async (request: ExtendedRequest, env: E
 router.get('/api/tools/:toolId/rating', async (request: ExtendedRequest, env: Env) => {
 
   try{
+    if (!env.MY_DATABASE) {
+        console.error("Database not initialized.");
+        return new Response(JSON.stringify({ error: 'Database not initialized' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
+
     const { toolId } = request.params
-    const { results } = await env.MY_DATABASE.prepare('SELECT AVG(rating) as averageRating FROM reviews WHERE toolId = ?').bind(toolId).all()
+      const { results } = await env.MY_DATABASE.prepare('SELECT AVG(rating) as averageRating FROM reviews WHERE toolId = ?').bind(toolId).all()
       log(`Fetched average rating for toolId: ${toolId}`, env);
     if(results[0].averageRating == null){
       return new Response(JSON.stringify({averageRating:0}), { headers: { 'Content-Type': 'application/json' } })
@@ -140,20 +181,22 @@ router.get('/api/tools/:toolId/rating', async (request: ExtendedRequest, env: En
 })
 router.post('/api/reviews', async (request: ExtendedRequest, env: Env) => {
 
+    const body = await request.json();
 
-  const body = await request.json();
+    const toolId = body.toolId
+    const rating = body.rating
+    const comment = body.comment
+    
 
-  const toolId = body.toolId
-  const rating = body.rating
-  const comment = body.comment
-  
+    // Manual validation
 
-  // Manual validation
-
-  if (!toolId || typeof toolId !== 'number' || !rating || typeof rating !== 'number' || rating < 1 || rating > 5 || typeof comment !== 'string') {
-      return new Response(JSON.stringify({ error: 'Invalid review data' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-  }
-  try {
+    if (!toolId || typeof toolId !== 'number' || !rating || typeof rating !== 'number' || rating < 1 || rating > 5 || typeof comment !== 'string') {
+        return new Response(JSON.stringify({ error: 'Invalid review data' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+    try {
+      if (!env.MY_DATABASE) {
+          return new Response(JSON.stringify({ error: 'Database not initialized' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      }
     
       log(`Creating review for toolId: ${toolId}, rating: ${rating}, comment: ${comment}`, env);
       const stmt = env.MY_DATABASE.prepare('INSERT INTO reviews (toolId, rating, comment) VALUES (?, ?, ?)');
@@ -171,8 +214,13 @@ router.post('/api/reviews', async (request: ExtendedRequest, env: Env) => {
 
 
 router.post('/api/tools', async (request: ExtendedRequest, env: Env) => {
-
   try{
+    if (!env.MY_DATABASE) {
+        console.error("Database not initialized.");
+        return new Response(JSON.stringify({ error: 'Database not initialized' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
+
+
     const body = await request.json()
     const { name, description, category, url, imageUrl, featured, language, translations } = body
 
